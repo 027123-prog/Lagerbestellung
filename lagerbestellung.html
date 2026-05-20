@@ -1,0 +1,654 @@
+﻿<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lagerbestand</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+  <style>
+    :root {
+      --sheet: #d8d8d8;
+      --panel: #efefef;
+      --cell: #f9f9f9;
+      --line: #111111;
+      --text: #111111;
+      --muted: #4d4d4d;
+      --blue: #d8eaf6;
+      --beige: #ebdfd2;
+      --accent: #000000;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      font-family: "Bahnschrift", "Segoe UI", sans-serif;
+      background-color: var(--sheet);
+      background-image:
+        linear-gradient(#c7c7c7 1px, transparent 1px),
+        linear-gradient(90deg, #c7c7c7 1px, transparent 1px);
+      background-size: 22px 22px;
+    }
+
+    .shell {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 12px 10px 90px;
+    }
+
+    .bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+      padding: 8px;
+      border: 2px solid var(--line);
+      background: var(--panel);
+    }
+
+    h1, h2 {
+      margin: 0;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    h1 { font-size: 1.08rem; }
+    h2 { font-size: 1rem; }
+
+    .tools {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .tools label,
+    .tools button,
+    .bar button,
+    .sticky button {
+      border: 2px solid var(--line);
+      border-radius: 0;
+      background: var(--cell);
+      color: var(--text);
+      min-height: 42px;
+      padding: 8px 12px;
+      font-family: inherit;
+      font-size: 0.94rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+    }
+
+    .tools label {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-width: 120px;
+    }
+
+    .tools input[type="file"] { display: none; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 8px;
+    }
+
+    .card {
+      text-align: left;
+      border: 2px solid var(--line);
+      border-radius: 0;
+      background: var(--cell);
+      padding: 12px;
+      width: 100%;
+      min-height: 98px;
+    }
+
+    .card h3 {
+      margin: 0;
+      font-size: 0.98rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .hidden { display: none !important; }
+
+    .items {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .item {
+      border: 2px solid var(--line);
+      background: var(--cell);
+      padding: 8px;
+      min-height: 132px;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      gap: 4px;
+    }
+
+    .article {
+      font-size: 0.9rem;
+      font-weight: 700;
+      line-height: 1.2;
+      word-break: break-word;
+    }
+
+    .item-size {
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: var(--muted);
+      line-height: 1.2;
+      min-height: 16px;
+    }
+
+    .item-bottom {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      align-items: end;
+      margin-top: 3px;
+    }
+
+    .target {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #ececec;
+      font-size: 0.86rem;
+      font-weight: 700;
+      text-align: center;
+      padding: 0 6px;
+    }
+
+    .edit input {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid var(--line);
+      background: var(--blue);
+      text-align: center;
+      font-size: 1rem;
+      font-weight: 700;
+      font-family: inherit;
+    }
+
+    .edit input:focus {
+      outline: none;
+      background: #fff8d7;
+    }
+
+    .sticky {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0;
+      border-top: 2px solid var(--line);
+    }
+
+    .sticky button {
+      border-width: 0 1px 0 0;
+      min-height: 54px;
+      background: #f3f3f3;
+    }
+
+    .sticky button:last-child { border-right: 0; }
+
+    .toast {
+      position: fixed;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 2px solid var(--line);
+      background: #fff;
+      padding: 8px 10px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      z-index: 50;
+    }
+
+    @media (min-width: 980px) {
+      .sticky {
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(980px, 100vw);
+        border-left: 2px solid var(--line);
+        border-right: 2px solid var(--line);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section id="homeView">
+      <div class="bar">
+        <h1>LAGER</h1>
+      </div>
+
+      <div class="tools">
+        <label>
+          LADEN
+          <input id="excelFile" type="file" accept=".xlsx,.xlsm,.xls" />
+        </label>
+        <button id="btnDemo" type="button">DEMO</button>
+        <button id="btnExport" type="button">EXPORT</button>
+      </div>
+
+      <div id="groupGrid" class="grid"></div>
+    </section>
+
+    <section id="groupView" class="hidden">
+      <div class="bar">
+        <button id="btnBack" type="button">ZURUECK</button>
+        <h2 id="groupTitle"></h2>
+      </div>
+
+      <div id="items" class="items"></div>
+
+      <div class="sticky">
+        <button id="btnSave" type="button">SPEICHERN</button>
+        <button id="btnMail" type="button">MAIL</button>
+        <button id="btnExport2" type="button">EXPORT</button>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script>
+    const el = {
+      homeView: document.getElementById('homeView'),
+      groupView: document.getElementById('groupView'),
+      groupGrid: document.getElementById('groupGrid'),
+      excelFile: document.getElementById('excelFile'),
+      btnDemo: document.getElementById('btnDemo'),
+      btnExport: document.getElementById('btnExport'),
+      btnExport2: document.getElementById('btnExport2'),
+      btnBack: document.getElementById('btnBack'),
+      btnSave: document.getElementById('btnSave'),
+      btnMail: document.getElementById('btnMail'),
+      groupTitle: document.getElementById('groupTitle'),
+      items: document.getElementById('items'),
+      toast: document.getElementById('toast')
+    };
+
+    let groups = [];
+    let selectedGroup = null;
+
+    function demoGroups() {
+      return [
+        {
+          name: 'Sperrholz',
+          supplier_email: 'lieferant-sperrholz@example.com',
+          items: [
+            { article: 'Pappel 4 mm', size: '2520x1870', target_stock: 2, current_stock: null, unit: 'Stk' },
+            { article: 'Pappel 6 mm', size: '2520x1870', target_stock: 2, current_stock: null, unit: 'Stk' },
+            { article: 'Pappel 8 mm', size: '2520x1870', target_stock: 2, current_stock: null, unit: 'Stk' },
+            { article: 'Pappel 10 mm', size: '2520x1870', target_stock: 2, current_stock: null, unit: 'Stk' },
+            { article: 'Pappel 12 mm', size: '2520x1870', target_stock: 2, current_stock: null, unit: 'Stk' },
+            { article: 'Pappel 15 mm', size: '2520x1870', target_stock: 2, current_stock: null, unit: 'Stk' },
+            { article: 'Pappel 18 mm', size: '2520x1870', target_stock: 2, current_stock: null, unit: 'Stk' },
+            { article: 'Bausperrholz 9 mm', size: '2500x1250', target_stock: 2, current_stock: null, unit: 'Stk' },
+            { article: 'Bausperrholz 12 mm', size: '2500x1250', target_stock: 2, current_stock: null, unit: 'Stk' },
+            { article: 'Bausperrholz 15 mm', size: '2500x1250', target_stock: 2, current_stock: null, unit: 'Stk' },
+            { article: 'Bausperrholz 18 mm', size: '2500x1250', target_stock: 2, current_stock: null, unit: 'Stk' }
+          ]
+        },
+        {
+          name: 'Moebelbauplatten',
+          supplier_email: 'lieferant-moebelbauplatten@example.com',
+          items: [
+            { article: 'Platte 16 mm', size: '2800x2070', target_stock: 2, current_stock: null, unit: 'Stk' },
+            { article: 'Platte 19 mm', size: '2800x2070', target_stock: 2, current_stock: null, unit: 'Stk' },
+            { article: 'Platte 22 mm', size: '2800x2070', target_stock: 2, current_stock: null, unit: 'Stk' },
+            { article: 'Weiss beschichtet 19 mm', size: '2800x2070', target_stock: 2, current_stock: null, unit: 'Stk' }
+          ]
+        }
+      ];
+    }
+
+    function showToast(msg) {
+      el.toast.textContent = msg;
+      el.toast.classList.remove('hidden');
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => el.toast.classList.add('hidden'), 2000);
+    }
+
+    function toNumber(v) {
+      if (v === null || v === undefined) return 0;
+      if (typeof v === 'number') return v;
+      const n = Number(String(v).replace(',', '.').trim());
+      return Number.isNaN(n) ? 0 : n;
+    }
+
+    function toOptionalNumber(v) {
+      if (v === null || v === undefined) return null;
+      if (typeof v === 'number') return Number.isNaN(v) ? null : v;
+      const text = String(v).replace(',', '.').trim();
+      if (!text) return null;
+      const n = Number(text);
+      return Number.isNaN(n) ? null : n;
+    }
+
+    function hasValue(v) {
+      return v !== null && v !== undefined && String(v).trim() !== '';
+    }
+
+    function fmt(n) {
+      if (!hasValue(n)) return '';
+      if (Number.isInteger(n)) return String(n);
+      return String(n.toFixed(2)).replace(/\.00$/, '').replace(/0$/, '');
+    }
+
+    function renderGroups() {
+      el.groupGrid.innerHTML = '';
+      if (!groups.length) {
+        el.groupGrid.innerHTML = '<button class="card" type="button">KEINE DATEN</button>';
+        return;
+      }
+
+      groups.forEach((g, idx) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'card';
+        btn.innerHTML = [
+          `<h3>${g.name}</h3>`
+        ].join('');
+        btn.addEventListener('click', () => openGroup(idx));
+        el.groupGrid.appendChild(btn);
+      });
+    }
+
+    function attachInputBehavior(input) {
+      input.addEventListener('focus', () => {
+        if (input.dataset.cleared === '1') return;
+        if (input.value !== '') input.value = '';
+        input.dataset.cleared = '1';
+      });
+    }
+
+    function openGroup(idx) {
+      selectedGroup = idx;
+      const g = groups[idx];
+      el.groupTitle.textContent = g.name;
+      el.items.innerHTML = '';
+
+      g.items.forEach((item, i) => {
+        const node = document.createElement('article');
+        node.className = 'item';
+        node.innerHTML = `
+          <div class="article">${item.article}</div>
+          <div class="item-size">${item.size || ''}</div>
+          <div class="item-bottom">
+            <div class="target">Soll ${fmt(item.target_stock)} ${item.unit}</div>
+            <div class="edit">
+              <input id="it-${i}" type="number" step="0.01" value="${fmt(item.current_stock)}" data-index="${i}" />
+            </div>
+          </div>
+        `;
+
+        const input = node.querySelector('input');
+        attachInputBehavior(input);
+        el.items.appendChild(node);
+      });
+
+      el.homeView.classList.add('hidden');
+      el.groupView.classList.remove('hidden');
+    }
+
+    function syncCurrentStockFromInputs() {
+      if (selectedGroup === null) return;
+      const g = groups[selectedGroup];
+      el.items.querySelectorAll('input[data-index]').forEach((inp) => {
+        const i = Number(inp.dataset.index);
+        g.items[i].current_stock = toOptionalNumber(inp.value);
+      });
+    }
+
+    function backToHome() {
+      selectedGroup = null;
+      el.groupView.classList.add('hidden');
+      el.homeView.classList.remove('hidden');
+      renderGroups();
+    }
+
+    function mailDraft() {
+      if (selectedGroup === null) return;
+      syncCurrentStockFromInputs();
+      const g = groups[selectedGroup];
+      if (!g.supplier_email) {
+        showToast('MAIL FEHLT');
+        return;
+      }
+
+      const lines = ['Guten Tag,', '', `bitte liefern Sie fuer ${g.name}:`, ''];
+      const toOrder = g.items
+        .filter((i) => hasValue(i.current_stock))
+        .map((i) => ({ ...i, order_qty: Math.max(i.target_stock - i.current_stock, 0) }))
+        .filter((i) => i.order_qty > 0);
+
+      if (!toOrder.length) {
+        lines.push('- Keine Nachbestellung noetig.');
+      } else {
+        toOrder.forEach((i) => {
+          const sizeText = i.size ? ` (${i.size})` : '';
+          lines.push(`- ${i.article}${sizeText}: ${fmt(i.order_qty)} ${i.unit}`);
+        });
+      }
+
+      lines.push('', 'Vielen Dank.');
+
+      const date = new Date().toLocaleDateString('de-DE');
+      const subject = `Bestellung ${g.name} (${date})`;
+      const body = lines.join('\n');
+      const url = `mailto:${encodeURIComponent(g.supplier_email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      window.location.href = url;
+    }
+
+    function parseWorkbook(wb) {
+      const out = [];
+      wb.SheetNames.forEach((name) => {
+        const ws = wb.Sheets[name];
+        const supplier_email = String((ws['B1'] && ws['B1'].v) || '').trim();
+        const items = [];
+        let headerRow = 3;
+        [3, 4, 5].forEach((r) => {
+          const a = String((ws[`A${r}`] && ws[`A${r}`].v) || '').toLowerCase().trim();
+          if (a === 'artikel') {
+            headerRow = r;
+          }
+        });
+        const bHead = String((ws[`B${headerRow}`] && ws[`B${headerRow}`].v) || '').toLowerCase();
+        const hasSizeColumn = bHead.includes('maß') || bHead.includes('mass') || bHead.includes('ma');
+        const dataStart = headerRow + 1;
+
+        for (let row = dataStart; row <= 500; row += 1) {
+          const a = ws[`A${row}`] ? String(ws[`A${row}`].v || '').trim() : '';
+          if (!a) continue;
+          const b = ws[`B${row}`] ? ws[`B${row}`].v : '';
+          const c = ws[`C${row}`] ? ws[`C${row}`].v : '';
+          const d = ws[`D${row}`] ? ws[`D${row}`].v : '';
+          const e = ws[`E${row}`] ? ws[`E${row}`].v : '';
+
+          let size = '';
+          let target = 0;
+          let current = '';
+          let unit = 'Stk';
+
+          if (hasSizeColumn) {
+            size = String(b || '').trim();
+            target = toNumber(c);
+            current = d;
+            unit = String(e || 'Stk').trim();
+          } else {
+            target = toNumber(b);
+            current = c;
+            unit = String(d || 'Stk').trim();
+          }
+
+          items.push({
+            article: a,
+            size,
+            target_stock: target,
+            current_stock: toOptionalNumber(current),
+            unit: unit || 'Stk'
+          });
+        }
+
+        out.push({ name, supplier_email, items });
+      });
+      return out;
+    }
+
+    async function exportWorkbookStyled() {
+      if (!groups.length) {
+        showToast('KEINE DATEN');
+        return;
+      }
+
+      if (selectedGroup !== null) syncCurrentStockFromInputs();
+
+      if (typeof ExcelJS === 'undefined') {
+        const wbFallback = XLSX.utils.book_new();
+        groups.forEach((g) => {
+          const rows = [
+            ['LieferantenEmail', g.supplier_email || ''],
+            ['Lagergruppe', g.name],
+            ['Artikel', 'Mass', 'Sollbestand', 'AktuellerBestand', 'Einheit']
+          ];
+          g.items.forEach((item) => rows.push([
+            item.article,
+            item.size || '',
+            item.target_stock,
+            hasValue(item.current_stock) ? item.current_stock : '',
+            item.unit
+          ]));
+          const ws = XLSX.utils.aoa_to_sheet(rows);
+          XLSX.utils.book_append_sheet(wbFallback, ws, g.name.slice(0, 31));
+        });
+        XLSX.writeFile(wbFallback, 'lagerbestand_aktualisiert.xlsx');
+        return;
+      }
+
+      const workbook = new ExcelJS.Workbook();
+      workbook.creator = 'Lagerbestellung HTML';
+      workbook.created = new Date();
+
+      const thin = { style: 'thin', color: { argb: 'FF111111' } };
+      const border = { top: thin, left: thin, bottom: thin, right: thin };
+
+      groups.forEach((g) => {
+        const ws = workbook.addWorksheet(g.name.slice(0, 31));
+        ws.columns = [
+          { key: 'article', width: 30 },
+          { key: 'size', width: 14 },
+          { key: 'target', width: 12 },
+          { key: 'current', width: 14 },
+          { key: 'unit', width: 10 },
+          { key: 'order', width: 14 }
+        ];
+
+        ws.mergeCells('A1:F1');
+        ws.getCell('A1').value = g.name;
+        ws.getCell('A1').alignment = { horizontal: 'center', vertical: 'middle' };
+        ws.getCell('A1').font = { bold: true, size: 13, name: 'Bahnschrift' };
+        ws.getCell('A1').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E2E2' } };
+
+        ws.getCell('A2').value = 'LieferantenEmail';
+        ws.getCell('B2').value = g.supplier_email || '';
+        ws.getCell('A2').font = { bold: true, name: 'Bahnschrift' };
+
+        ws.getRow(4).values = ['Artikel', 'Mass', 'Soll', 'Ist', 'Einheit', 'Bestellung'];
+        ws.getRow(4).font = { bold: true, name: 'Bahnschrift' };
+        ws.getRow(4).alignment = { horizontal: 'center', vertical: 'middle' };
+        ws.getRow(4).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0E0E0' } };
+
+        let r = 5;
+        g.items.forEach((item) => {
+          ws.getCell(`A${r}`).value = item.article;
+          ws.getCell(`B${r}`).value = item.size || '';
+          ws.getCell(`C${r}`).value = item.target_stock;
+          ws.getCell(`D${r}`).value = hasValue(item.current_stock) ? item.current_stock : '';
+          ws.getCell(`E${r}`).value = item.unit;
+          ws.getCell(`F${r}`).value = { formula: `IF(D${r}=\"\",\"\",MAX(C${r}-D${r},0))` };
+          r += 1;
+        });
+
+        ws.getCell(`E${r + 1}`).value = 'Summe Bestellung';
+        ws.getCell(`F${r + 1}`).value = { formula: `SUM(F5:F${r - 1})` };
+        ws.getCell(`E${r + 1}`).font = { bold: true, name: 'Bahnschrift' };
+        ws.getCell(`F${r + 1}`).font = { bold: true, name: 'Bahnschrift' };
+        ws.getCell(`F${r + 1}`).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD8EAF6' } };
+
+        for (let rr = 1; rr <= r + 1; rr += 1) {
+          for (let cc = 1; cc <= 6; cc += 1) {
+            const cell = ws.getCell(rr, cc);
+            cell.border = border;
+            cell.font = cell.font || { name: 'Bahnschrift' };
+            if (!cell.alignment) {
+              cell.alignment = { vertical: 'middle' };
+            }
+          }
+        }
+
+        ws.getColumn('B').alignment = { horizontal: 'center', vertical: 'middle' };
+        ws.getColumn('C').alignment = { horizontal: 'center', vertical: 'middle' };
+        ws.getColumn('D').alignment = { horizontal: 'center', vertical: 'middle' };
+        ws.getColumn('E').alignment = { horizontal: 'center', vertical: 'middle' };
+        ws.getColumn('F').alignment = { horizontal: 'center', vertical: 'middle' };
+        ws.views = [{ state: 'frozen', ySplit: 4 }];
+      });
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'lagerbestand_aktualisiert.xlsx';
+      link.click();
+      URL.revokeObjectURL(link.href);
+      showToast('EXPORT FERTIG');
+    }
+
+    async function onFileChange(e) {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const buffer = await file.arrayBuffer();
+      const wb = XLSX.read(buffer, { type: 'array' });
+      groups = parseWorkbook(wb);
+      renderGroups();
+      showToast('GELADEN');
+    }
+
+    el.excelFile.addEventListener('change', onFileChange);
+    el.btnDemo.addEventListener('click', () => {
+      groups = demoGroups();
+      renderGroups();
+      showToast('DEMO');
+    });
+
+    el.btnExport.addEventListener('click', () => { exportWorkbookStyled(); });
+    el.btnExport2.addEventListener('click', () => { exportWorkbookStyled(); });
+    el.btnBack.addEventListener('click', backToHome);
+
+    el.btnSave.addEventListener('click', () => {
+      syncCurrentStockFromInputs();
+      showToast('GESPEICHERT');
+    });
+
+    el.btnMail.addEventListener('click', mailDraft);
+
+    groups = demoGroups();
+    renderGroups();
+  </script>
+</body>
+</html>

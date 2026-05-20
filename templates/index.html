@@ -1,0 +1,53 @@
+﻿<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LagerBestellApp</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section id="homeView">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Lagerbestand</p>
+            <h1>Kacheluebersicht</h1>
+          </div>
+          <button id="refreshBtn" class="ghost-btn" type="button">Aktualisieren</button>
+        </header>
+
+        <p class="hint">
+          Waehle eine Lagergruppe. Danach kannst du den aktuellen Bestand direkt am Smartphone pflegen.
+        </p>
+
+        <div id="groupGrid" class="group-grid"></div>
+      </section>
+
+      <section id="groupView" class="hidden">
+        <header class="topbar topbar-tight">
+          <button id="backBtn" class="ghost-btn" type="button">Zurueck</button>
+          <div>
+            <p class="eyebrow" id="groupSupplier"></p>
+            <h2 id="groupTitle"></h2>
+          </div>
+        </header>
+
+        <p class="hint" id="groupHint"></p>
+
+        <form id="stockForm" novalidate>
+          <div id="itemList" class="item-list"></div>
+        </form>
+
+        <div class="sticky-actions">
+          <button id="saveBtn" class="primary-btn" type="button">Speichern</button>
+          <button id="mailBtn" class="accent-btn" type="button">Bestellmail erzeugen</button>
+        </div>
+      </section>
+    </main>
+
+    <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+  </body>
+</html>

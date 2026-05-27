@@ -291,7 +291,7 @@
       right: 0;
       bottom: 0;
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-columns: repeat(4, 1fr);
       gap: 0;
       border-top: 2px solid var(--line);
     }
@@ -366,6 +366,7 @@
 
       <div class="sticky">
         <button id="btnSave" type="button">SPEICHERN</button>
+        <button id="btnClear" type="button">LEEREN</button>
         <button id="btnMail" type="button">MAIL</button>
         <button id="btnExport2" type="button">EXPORT</button>
       </div>
@@ -385,6 +386,7 @@
       btnExport2: document.getElementById('btnExport2'),
       btnBack: document.getElementById('btnBack'),
       btnSave: document.getElementById('btnSave'),
+      btnClear: document.getElementById('btnClear'),
       btnMail: document.getElementById('btnMail'),
       groupTitle: document.getElementById('groupTitle'),
       items: document.getElementById('items'),
@@ -424,10 +426,10 @@
             { article: '16 mm - Korpus K101PE', size: '2800x2070', target_stock: 1, current_stock: null, order_qty: null, unit: 'Stk' },
             { article: '19 mm - Korpus K101PE', size: '2800x2070', target_stock: 2, current_stock: null, order_qty: null, unit: 'Stk' },
             { article: '25 mm - Korpus K101PE', size: '2800x2070', target_stock: 1, current_stock: null, order_qty: null, unit: 'Stk' },
-            { article: '08 mm - RW Platte MDF K101 SM', size: '2800x2070', target_stock: 1, current_stock: null, order_qty: null, unit: 'Stk' },
+            { article: '08 mm - RW Platte MDF K101 SM', size: '2800x2070', target_stock: 2, current_stock: null, order_qty: null, unit: 'Stk' },
             { article: '19 mm - Front Krono K8685 PD', size: '2800x2070', target_stock: 1, current_stock: null, order_qty: null, unit: 'Stk' },
             { article: '19 mm - Front edler Pfleiderer W10100 SD', size: '2800x2070', target_stock: 1, current_stock: null, order_qty: null, unit: 'Stk' },
-            { article: '19 mm - Front Lack PrimeBoard XTreme Matt', size: '2800x2070', target_stock: 0, current_stock: null, order_qty: null, unit: 'Stk' }
+            { article: '19 mm - Front Lack PrimeBoard XTreme Matt', size: '2800x2070', target_stock: 1, current_stock: null, order_qty: null, unit: 'Stk' }
           ]
         }
       ];
@@ -538,7 +540,7 @@
           <div class="item-bottom">
             <div class="target is-secondary">${fallbackSecondary}</div>
             <div class="edit">
-              <input id="it-${i}" type="number" step="0.01" value="${fmt(inputValue)}" data-index="${i}" aria-label="${inputLabel} ${item.article}" />
+              <input id="it-${i}" type="text" inputmode="decimal" value="${fmt(inputValue)}" data-index="${i}" aria-label="${inputLabel} ${item.article}" />
             </div>
           </div>
         `;
@@ -563,6 +565,22 @@
           g.items[i].order_qty = toOptionalNumber(inp.value);
         }
       });
+    }
+
+    function clearCurrentInputs() {
+      if (selectedGroup === null) return;
+      const g = groups[selectedGroup];
+      el.items.querySelectorAll('input[data-index]').forEach((inp) => {
+        const i = Number(inp.dataset.index);
+        inp.value = '';
+        inp.dataset.cleared = '1';
+        if (entryMode === 'stock') {
+          g.items[i].current_stock = null;
+        } else {
+          g.items[i].order_qty = null;
+        }
+      });
+      showToast('FELDER GELEERT');
     }
 
     function backToHome() {
@@ -798,6 +816,7 @@
       showToast('GESPEICHERT');
     });
 
+    el.btnClear.addEventListener('click', clearCurrentInputs);
     el.btnMail.addEventListener('click', mailDraft);
     el.modeToggle.addEventListener('change', () => {
       applyMode(el.modeToggle.checked ? 'stock' : 'order');

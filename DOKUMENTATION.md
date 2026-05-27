@@ -62,6 +62,9 @@ Nils wollte zwischen direkter Bestellmengenerfassung und Bestandserfassung umsch
 
 - Die eingebauten Startdaten in `lagerbestellung.html` wurden aus der aktualisierten Excel `lagerbestand_vorlage_mass_schoen.xlsx` uebernommen.
 - Besonders die Gruppe `Moebelbauplatten` enthaelt jetzt die aktualisierten Artikel und Wunsch-Sollbestaende aus der Excel.
+- Nach einer weiteren Excel-Aktualisierung wurden die Sollbestaende erneut in die HTML-Startdaten uebernommen.
+- Die Eingabefelder akzeptieren jetzt Dezimalzahlen mit Komma oder Punkt, z. B. `0,5` und `0.5`.
+- In der Artikelerfassung wurde ein Button `LEEREN` ergaenzt, der die Felder des aktuellen Modus leert.
 
 ### Ausloeser
 
@@ -72,3 +75,4 @@ Nils hatte die Excel mit den Wunsch-Lagerbestaenden aktualisiert und wollte die 
 - Die HTML-Seite wurde direkt aktualisiert, damit die Daten beim Oeffnen sofort sichtbar sind und nicht erst manuell per Excel-Import geladen werden muessen.
 - Die Lieferantenmail-Felder wurden so uebernommen, wie sie in der Excel stehen; aktuell sind sie leer.
 - Fuer GitHub Pages wurde `index.html` als Weiterleitung auf `lagerbestellung.html` ergaenzt, damit die Projekt-Domain direkt die App oeffnet.
+- Fuer Dezimal-Komma wurden die Artikel-Eingabefelder von `number` auf `text` mit Dezimal-Tastatur umgestellt; die vorhandene Parser-Logik wandelt Komma und Punkt in Zahlen.

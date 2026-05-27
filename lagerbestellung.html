@@ -17,6 +17,35 @@
       --blue: #d8eaf6;
       --beige: #ebdfd2;
       --accent: #000000;
+      --mode-bg: #fff4d8;
+      --mode-soft: #ffe0a6;
+      --mode-strong: #a44718;
+      --input-bg: #fff4d8;
+      --focus-bg: #fff8d7;
+    }
+
+    body[data-mode="stock"] {
+      --sheet: #d7e7e4;
+      --panel: #edf6f4;
+      --cell: #fbfefd;
+      --blue: #d7ecff;
+      --mode-bg: #ddf1ee;
+      --mode-soft: #bfe3de;
+      --mode-strong: #0f6b61;
+      --input-bg: #d7ecff;
+      --focus-bg: #eaf7ff;
+    }
+
+    body[data-mode="order"] {
+      --sheet: #e7ded2;
+      --panel: #f4ece3;
+      --cell: #fffdfa;
+      --blue: #ffe7b8;
+      --mode-bg: #fff0cf;
+      --mode-soft: #ffd892;
+      --mode-strong: #9f4418;
+      --input-bg: #ffe0a6;
+      --focus-bg: #fff3d4;
     }
 
     * { box-sizing: border-box; }
@@ -27,8 +56,8 @@
       font-family: "Bahnschrift", "Segoe UI", sans-serif;
       background-color: var(--sheet);
       background-image:
-        linear-gradient(#c7c7c7 1px, transparent 1px),
-        linear-gradient(90deg, #c7c7c7 1px, transparent 1px);
+        linear-gradient(rgba(17, 17, 17, 0.11) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(17, 17, 17, 0.11) 1px, transparent 1px);
       background-size: 22px 22px;
     }
 
@@ -91,6 +120,73 @@
     }
 
     .tools input[type="file"] { display: none; }
+
+    .mode-switch {
+      display: grid;
+      grid-template-columns: 1fr 58px 1fr;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      padding: 8px;
+      border: 2px solid var(--line);
+      background: var(--mode-bg);
+    }
+
+    .mode-label {
+      min-height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--line);
+      background: var(--cell);
+      padding: 6px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-align: center;
+      line-height: 1.15;
+    }
+
+    .mode-label.is-active {
+      background: var(--mode-soft);
+      color: var(--line);
+    }
+
+    .switch {
+      position: relative;
+      width: 58px;
+      height: 34px;
+      display: inline-block;
+    }
+
+    .switch input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .slider {
+      position: absolute;
+      inset: 0;
+      border: 2px solid var(--line);
+      background: #ffffff;
+      cursor: pointer;
+    }
+
+    .slider::before {
+      content: "";
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      left: 3px;
+      top: 3px;
+      border: 2px solid var(--line);
+      background: var(--mode-strong);
+      transition: transform 0.16s ease;
+    }
+
+    .switch input:checked + .slider::before {
+      transform: translateX(24px);
+    }
 
     .grid {
       display: grid;
@@ -169,11 +265,15 @@
       padding: 0 6px;
     }
 
+    .target.is-secondary {
+      background: var(--mode-bg);
+    }
+
     .edit input {
       width: 100%;
       min-height: 42px;
       border: 1px solid var(--line);
-      background: var(--blue);
+      background: var(--input-bg);
       text-align: center;
       font-size: 1rem;
       font-weight: 700;
@@ -182,7 +282,7 @@
 
     .edit input:focus {
       outline: none;
-      background: #fff8d7;
+      background: var(--focus-bg);
     }
 
     .sticky {
@@ -230,6 +330,15 @@
 </head>
 <body>
   <main class="shell">
+    <div class="mode-switch" aria-label="Erfassungsmodus">
+      <div id="modeOrderLabel" class="mode-label is-active">Bestellmenge erfassen</div>
+      <label class="switch" for="modeToggle">
+        <input id="modeToggle" type="checkbox" />
+        <span class="slider" aria-hidden="true"></span>
+      </label>
+      <div id="modeStockLabel" class="mode-label">Bestand erfassen</div>
+    </div>
+
     <section id="homeView">
       <div class="bar">
         <h1>LAGER</h1>
@@ -279,39 +388,46 @@
       btnMail: document.getElementById('btnMail'),
       groupTitle: document.getElementById('groupTitle'),
       items: document.getElementById('items'),
-      toast: document.getElementById('toast')
+      toast: document.getElementById('toast'),
+      modeToggle: document.getElementById('modeToggle'),
+      modeOrderLabel: document.getElementById('modeOrderLabel'),
+      modeStockLabel: document.getElementById('modeStockLabel')
     };
 
     let groups = [];
     let selectedGroup = null;
+    let entryMode = 'order';
 
     function demoGroups() {
       return [
         {
           name: 'Sperrholz',
-          supplier_email: 'lieferant-sperrholz@example.com',
+          supplier_email: '',
           items: [
-            { article: 'Pappel 4 mm', size: '2520x1870', target_stock: 2, current_stock: null, unit: 'Stk' },
-            { article: 'Pappel 6 mm', size: '2520x1870', target_stock: 2, current_stock: null, unit: 'Stk' },
-            { article: 'Pappel 8 mm', size: '2520x1870', target_stock: 2, current_stock: null, unit: 'Stk' },
-            { article: 'Pappel 10 mm', size: '2520x1870', target_stock: 2, current_stock: null, unit: 'Stk' },
-            { article: 'Pappel 12 mm', size: '2520x1870', target_stock: 2, current_stock: null, unit: 'Stk' },
-            { article: 'Pappel 15 mm', size: '2520x1870', target_stock: 2, current_stock: null, unit: 'Stk' },
-            { article: 'Pappel 18 mm', size: '2520x1870', target_stock: 2, current_stock: null, unit: 'Stk' },
-            { article: 'Bausperrholz 9 mm', size: '2500x1250', target_stock: 2, current_stock: null, unit: 'Stk' },
-            { article: 'Bausperrholz 12 mm', size: '2500x1250', target_stock: 2, current_stock: null, unit: 'Stk' },
-            { article: 'Bausperrholz 15 mm', size: '2500x1250', target_stock: 2, current_stock: null, unit: 'Stk' },
-            { article: 'Bausperrholz 18 mm', size: '2500x1250', target_stock: 2, current_stock: null, unit: 'Stk' }
+            { article: 'Pappel 4 mm', size: '2520x1870', target_stock: 2, current_stock: null, order_qty: null, unit: 'Stk' },
+            { article: 'Pappel 6 mm', size: '2520x1870', target_stock: 2, current_stock: null, order_qty: null, unit: 'Stk' },
+            { article: 'Pappel 8 mm', size: '2520x1870', target_stock: 2, current_stock: null, order_qty: null, unit: 'Stk' },
+            { article: 'Pappel 10 mm', size: '2520x1870', target_stock: 2, current_stock: null, order_qty: null, unit: 'Stk' },
+            { article: 'Pappel 12 mm', size: '2520x1870', target_stock: 2, current_stock: null, order_qty: null, unit: 'Stk' },
+            { article: 'Pappel 15 mm', size: '2520x1870', target_stock: 2, current_stock: null, order_qty: null, unit: 'Stk' },
+            { article: 'Pappel 18 mm', size: '2520x1870', target_stock: 2, current_stock: null, order_qty: null, unit: 'Stk' },
+            { article: 'Bausperrholz 9 mm', size: '2500x1250', target_stock: 2, current_stock: null, order_qty: null, unit: 'Stk' },
+            { article: 'Bausperrholz 12 mm', size: '2500x1250', target_stock: 2, current_stock: null, order_qty: null, unit: 'Stk' },
+            { article: 'Bausperrholz 15 mm', size: '2500x1250', target_stock: 2, current_stock: null, order_qty: null, unit: 'Stk' },
+            { article: 'Bausperrholz 18 mm', size: '2500x1250', target_stock: 2, current_stock: null, order_qty: null, unit: 'Stk' }
           ]
         },
         {
           name: 'Moebelbauplatten',
-          supplier_email: 'lieferant-moebelbauplatten@example.com',
+          supplier_email: '',
           items: [
-            { article: 'Platte 16 mm', size: '2800x2070', target_stock: 2, current_stock: null, unit: 'Stk' },
-            { article: 'Platte 19 mm', size: '2800x2070', target_stock: 2, current_stock: null, unit: 'Stk' },
-            { article: 'Platte 22 mm', size: '2800x2070', target_stock: 2, current_stock: null, unit: 'Stk' },
-            { article: 'Weiss beschichtet 19 mm', size: '2800x2070', target_stock: 2, current_stock: null, unit: 'Stk' }
+            { article: '16 mm - Korpus K101PE', size: '2800x2070', target_stock: 1, current_stock: null, order_qty: null, unit: 'Stk' },
+            { article: '19 mm - Korpus K101PE', size: '2800x2070', target_stock: 2, current_stock: null, order_qty: null, unit: 'Stk' },
+            { article: '25 mm - Korpus K101PE', size: '2800x2070', target_stock: 1, current_stock: null, order_qty: null, unit: 'Stk' },
+            { article: '08 mm - RW Platte MDF K101 SM', size: '2800x2070', target_stock: 1, current_stock: null, order_qty: null, unit: 'Stk' },
+            { article: '19 mm - Front Krono K8685 PD', size: '2800x2070', target_stock: 1, current_stock: null, order_qty: null, unit: 'Stk' },
+            { article: '19 mm - Front edler Pfleiderer W10100 SD', size: '2800x2070', target_stock: 1, current_stock: null, order_qty: null, unit: 'Stk' },
+            { article: '19 mm - Front Lack PrimeBoard XTreme Matt', size: '2800x2070', target_stock: 0, current_stock: null, order_qty: null, unit: 'Stk' }
           ]
         }
       ];
@@ -350,6 +466,28 @@
       return String(n.toFixed(2)).replace(/\.00$/, '').replace(/0$/, '');
     }
 
+    function getOrderQty(item) {
+      if (entryMode === 'order' && hasValue(item.order_qty)) {
+        return Math.max(toNumber(item.order_qty), 0);
+      }
+      if (!hasValue(item.current_stock)) return 0;
+      return Math.max(toNumber(item.target_stock) - toNumber(item.current_stock), 0);
+    }
+
+    function applyMode(mode) {
+      if (selectedGroup !== null) {
+        syncCurrentStockFromInputs();
+      }
+      entryMode = mode === 'stock' ? 'stock' : 'order';
+      document.body.dataset.mode = entryMode;
+      el.modeToggle.checked = entryMode === 'stock';
+      el.modeOrderLabel.classList.toggle('is-active', entryMode === 'order');
+      el.modeStockLabel.classList.toggle('is-active', entryMode === 'stock');
+      if (selectedGroup !== null) {
+        openGroup(selectedGroup);
+      }
+    }
+
     function renderGroups() {
       el.groupGrid.innerHTML = '';
       if (!groups.length) {
@@ -384,15 +522,23 @@
       el.items.innerHTML = '';
 
       g.items.forEach((item, i) => {
+        const inputValue = entryMode === 'stock' ? item.current_stock : item.order_qty;
+        const inputLabel = entryMode === 'stock' ? 'Ist' : 'Bestell';
+        const secondaryLabel = entryMode === 'stock'
+          ? `Soll ${fmt(item.target_stock)} ${item.unit}`
+          : `Ist ${fmt(item.current_stock)} ${item.unit}`;
+        const fallbackSecondary = entryMode === 'order' && !hasValue(item.current_stock)
+          ? `Soll ${fmt(item.target_stock)} ${item.unit}`
+          : secondaryLabel;
         const node = document.createElement('article');
         node.className = 'item';
         node.innerHTML = `
           <div class="article">${item.article}</div>
           <div class="item-size">${item.size || ''}</div>
           <div class="item-bottom">
-            <div class="target">Soll ${fmt(item.target_stock)} ${item.unit}</div>
+            <div class="target is-secondary">${fallbackSecondary}</div>
             <div class="edit">
-              <input id="it-${i}" type="number" step="0.01" value="${fmt(item.current_stock)}" data-index="${i}" />
+              <input id="it-${i}" type="number" step="0.01" value="${fmt(inputValue)}" data-index="${i}" aria-label="${inputLabel} ${item.article}" />
             </div>
           </div>
         `;
@@ -411,7 +557,11 @@
       const g = groups[selectedGroup];
       el.items.querySelectorAll('input[data-index]').forEach((inp) => {
         const i = Number(inp.dataset.index);
-        g.items[i].current_stock = toOptionalNumber(inp.value);
+        if (entryMode === 'stock') {
+          g.items[i].current_stock = toOptionalNumber(inp.value);
+        } else {
+          g.items[i].order_qty = toOptionalNumber(inp.value);
+        }
       });
     }
 
@@ -433,8 +583,7 @@
 
       const lines = ['Guten Tag,', '', `bitte liefern Sie fuer ${g.name}:`, ''];
       const toOrder = g.items
-        .filter((i) => hasValue(i.current_stock))
-        .map((i) => ({ ...i, order_qty: Math.max(i.target_stock - i.current_stock, 0) }))
+        .map((i) => ({ ...i, order_qty: getOrderQty(i) }))
         .filter((i) => i.order_qty > 0);
 
       if (!toOrder.length) {
@@ -501,6 +650,7 @@
             size,
             target_stock: target,
             current_stock: toOptionalNumber(current),
+            order_qty: null,
             unit: unit || 'Stk'
           });
         }
@@ -524,14 +674,15 @@
           const rows = [
             ['LieferantenEmail', g.supplier_email || ''],
             ['Lagergruppe', g.name],
-            ['Artikel', 'Mass', 'Sollbestand', 'AktuellerBestand', 'Einheit']
+            ['Artikel', 'Mass', 'Sollbestand', 'AktuellerBestand', 'Einheit', 'Bestellung']
           ];
           g.items.forEach((item) => rows.push([
             item.article,
             item.size || '',
             item.target_stock,
             hasValue(item.current_stock) ? item.current_stock : '',
-            item.unit
+            item.unit,
+            entryMode === 'order' && hasValue(item.order_qty) ? item.order_qty : getOrderQty(item)
           ]));
           const ws = XLSX.utils.aoa_to_sheet(rows);
           XLSX.utils.book_append_sheet(wbFallback, ws, g.name.slice(0, 31));
@@ -580,7 +731,9 @@
           ws.getCell(`C${r}`).value = item.target_stock;
           ws.getCell(`D${r}`).value = hasValue(item.current_stock) ? item.current_stock : '';
           ws.getCell(`E${r}`).value = item.unit;
-          ws.getCell(`F${r}`).value = { formula: `IF(D${r}=\"\",\"\",MAX(C${r}-D${r},0))` };
+          ws.getCell(`F${r}`).value = entryMode === 'order' && hasValue(item.order_qty)
+            ? item.order_qty
+            : { formula: `IF(D${r}=\"\",\"\",MAX(C${r}-D${r},0))` };
           r += 1;
         });
 
@@ -646,8 +799,12 @@
     });
 
     el.btnMail.addEventListener('click', mailDraft);
+    el.modeToggle.addEventListener('change', () => {
+      applyMode(el.modeToggle.checked ? 'stock' : 'order');
+    });
 
     groups = demoGroups();
+    applyMode('order');
     renderGroups();
   </script>
 </body>

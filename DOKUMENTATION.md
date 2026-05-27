@@ -71,3 +71,4 @@ Nils hatte die Excel mit den Wunsch-Lagerbestaenden aktualisiert und wollte die 
 
 - Die HTML-Seite wurde direkt aktualisiert, damit die Daten beim Oeffnen sofort sichtbar sind und nicht erst manuell per Excel-Import geladen werden muessen.
 - Die Lieferantenmail-Felder wurden so uebernommen, wie sie in der Excel stehen; aktuell sind sie leer.
+- Fuer GitHub Pages wurde `index.html` als Weiterleitung auf `lagerbestellung.html` ergaenzt, damit die Projekt-Domain direkt die App oeffnet.

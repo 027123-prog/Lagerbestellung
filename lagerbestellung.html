@@ -211,6 +211,21 @@
       line-height: 1.2;
     }
 
+    .wuerth-entry {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 8px;
+      color: var(--text);
+      text-decoration: none;
+      border-color: #b50000;
+    }
+
+    .wuerth-entry h3 { color: #b50000; }
+    .wuerth-entry p { margin: 0; font-size: 0.82rem; }
+    .wuerth-entry:focus-visible { outline: 3px solid #b50000; outline-offset: 3px; }
+
     .hidden { display: none !important; }
 
     .items {
@@ -352,6 +367,11 @@
         <button id="btnDemo" type="button">DEMO</button>
         <button id="btnExport" type="button">EXPORT</button>
       </div>
+
+      <a class="card wuerth-entry" href="https://wuerth-bestellhilfe-nw-20261106.roewekamp-stumpe.chatgpt.site/wuerth" aria-label="Würth – private Bestellhilfe öffnen">
+        <h3>WÜRTH</h3>
+        <p>Sägeblätter und Verbrauchsmaterial · Private Bestellhilfe</p>
+      </a>
 
       <div id="groupGrid" class="grid"></div>
     </section>

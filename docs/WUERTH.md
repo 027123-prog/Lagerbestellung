@@ -9,3 +9,5 @@ Die bisherigen Lagergruppen, Excel-Funktionen und Erfassungsmodi bleiben erhalte
 Wichtige Stellen: `.wuerth-entry` im Stylesheet und der feste Anker innerhalb von `#homeView`. Öffentliche Adresse: https://027123-prog.github.io/Lagerbestellung/lagerbestellung.html
 
 Lokal geprüft: Startansicht, Handybreite, unveränderter Aufruf der Lagergruppe und korrektes Ziel des Würth-Links. Nach Veröffentlichung wird die GitHub-Pages-Version sichtbar geprüft.
+
+Veröffentlichungsquelle: GitHub Pages ist auf `gh-pages` und `/ (root)` eingestellt. Der gepflegte HTML-Stand und diese Dokumentation werden auf `main` und `gh-pages` gemeinsam fortgeführt. Änderungen nur auf `main` aktualisieren die öffentliche Seite nicht.
